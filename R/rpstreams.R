@@ -10,6 +10,7 @@
 #' return information about the state of the stream object.
 #' 
 #' @author Timothy H. Keitt
+#' @author Jonathan Wakeley (pstreams C++ library)
 #'
 #' @docType package
 #' @name rpstreams
@@ -74,10 +75,12 @@ pstream = function(command, args = "")
 #' @details Closing a stream will wait until the spawned process completes. This
 #' can hang your session if the process is not well-behaved. You should manually
 #' end the proces if possible. \code{pstream_close} will check whether the program
-#' has exited. If it is still running it is sent a SIGTERM signal. The process is then
+#' has exited. If it is still running it, EOF is sent. The process is then
 #' checked for a predetermined number of seconds (set by the compile flag KILL_WAIT_SECONDS).
-#' If the process does not exit during that perio, then SIGKILL signal is sent.
-#' After that, the stream is manually closed.
+#' If the process does not exit during that perio, then SIGTERM signal is sent. If
+#' after another round of waiting, the process has not existed, it is then sent
+#' the SIGKILL signal. After that, the stream is manually closed.
+#' 
 #' @rdname pstream
 #' @export
 pstream_close = function(stream)

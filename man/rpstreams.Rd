@@ -18,5 +18,7 @@ return information about the state of the stream object.
 }
 \author{
 Timothy H. Keitt
+
+Jonathan Wakeley (pstreams C++ library)
 }
 

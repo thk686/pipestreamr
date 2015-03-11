@@ -24,7 +24,8 @@ static bool still_running(handle s)
 void close_(handle s)
 {
   if (!s) stop("Invalid stream reference");
-  if (!s->rdbuf()->exited()) s->rdbuf()->killpg(15);
+  if (!s->rdbuf()->exited()) s->rdbuf()->peof();
+  if (still_running(s)) s->rdbuf()->killpg(15);
   if (still_running(s)) s->rdbuf()->killpg(9);
   if (s->is_open()) s->close();
 }
