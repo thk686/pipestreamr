@@ -13,11 +13,11 @@ Here is a small example:
 x = pstream("R", "--vanilla --slave")
 a = 1:3
 write_stdin(x, "a = unserialize(stdin())")
-c1 = pstream_output_conn(x)
-serialize(a, c1$conn)
-c1$flush()
+c1 = pstream_output_conn(x)       # writes stdin
+serialize(a, conn(c1))            # get the con object
+flush(c1)                         # required
 write_stdin(x, "serialize(a, stdout())")
-c2 = pstream_input_conn(x)
+c2 = pstream_input_conn(x)        # reads stdout
 unserialize(c2)
 pstream_close(x)
 ```

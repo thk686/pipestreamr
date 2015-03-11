@@ -263,8 +263,8 @@ signal = function(stream, signal = 15, group = FALSE)
 #' a = 1:3
 #' write_stdin(x, "a = unserialize(stdin())")
 #' c1 = pstream_output_conn(x)
-#' serialize(a, c1$conn)
-#' c1$flush()
+#' serialize(a, conn(c1))            # get the con object
+#' flush(c1)                         # required
 #' write_stdin(x, "serialize(a, stdout())")
 #' c2 = pstream_input_conn(x)
 #' unserialize(c2)
@@ -287,5 +287,17 @@ pstream_output_conn = function(stream, send_eof = FALSE)
   msg = NULL
   tconn = textConnection("msg", open = "w", local = TRUE)
   f = function() write_stdin(stream, msg, send_eof)
-  list(conn = tconn, flush = f)
+  structure(list(conn = tconn, flush = f),
+            class = "pstream_output_conn")
 }
+
+#' @rdname pstream-conn
+#' @export
+conn = function(stream) stream$conn
+
+#' @rdname pstream-conn
+#' @export
+setMethod("flush",
+signature(con = "pstream_output_conn"),
+function(stream) stream$flush())
+
