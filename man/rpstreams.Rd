@@ -4,10 +4,11 @@
 \name{rpstreams}
 \alias{rpstreams}
 \alias{rpstreams-package}
-\title{Bidirectional communication over pipes}
+\title{Bidirectional, non-blocking communication over pipes}
 \description{
 The \code{rpstreams} package wraps Jonathan Wakely's pstreams library, which
-allows communicating with a subprocess using stdin, stdout and stderr.
+allows communicating with a subprocess using stdin, stdout and stderr. All
+reads are non-blocking.
 }
 \details{
 The \code{\link{pstream}} function opens a stream object linked to a specified

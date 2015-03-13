@@ -1,7 +1,8 @@
-#' Bidirectional communication over pipes
+#' Bidirectional, non-blocking communication over pipes
 #' 
 #' The \code{rpstreams} package wraps Jonathan Wakely's pstreams library, which
-#' allows communicating with a subprocess using stdin, stdout and stderr.
+#' allows communicating with a subprocess using stdin, stdout and stderr. All
+#' reads are non-blocking.
 #' 
 #' The \code{\link{pstream}} function opens a stream object linked to a specified
 #' command (a program callable from the command line). Three functions:
@@ -34,9 +35,6 @@ setClass("pstream",
 #' @param args a vector of argument strings
 #' 
 #' @examples
-#' # Note: it appears that reading from stdout and stderr
-#' # does not work in examples. I suspect those are redirected
-#' # by R internally when running examples.
 #' x = pstream("R")
 #' status(x)
 #' read_stderr(x)
@@ -108,9 +106,18 @@ function(object)
 #' @param data a vector of values
 #' @param send_eof if true, write EOF to stream
 #' 
-#' # Note: it appears that reading from stdout and stderr
-#' # does not work in examples. I suspect those are redirected
-#' # by R internally when running examples.
+#' @details
+#' Because reading from the pipe stream is non-blocking, there is
+#' no method to determine whether the process has written anything
+#' to its standard out or standard error. If no output has been
+#' generated, then \code{read_stdout} and \code{read_stderr} will
+#' return empty strings. You may need to \code{\link{Sys.sleep}}
+#' between writting to standard input and reading from standard
+#' output. \code{read_stdout} and \code{read_stderr} will try
+#' to read output for \code{timeout} seconds and then quit. They
+#' will return immediately if there are characters to be read.
+#' 
+#' @examples
 #' x = pstream("R")
 #' read_stderr(x)
 #' 
@@ -130,20 +137,21 @@ write_stdin = function(stream, data, send_eof = FALSE)
   return(invisible(stream))
 }
 
+#' @param timeout number of seconds to attempt reading
 #' @rdname read-write
 #' @export
-read_stdout = function(stream)
+read_stdout = function(stream, timeout = 10)
 {
-  res = read_stdout_(stream@handle)
+  res = read_stdout_(stream@handle, timeout)
   class(res) = "rawtext"
   return(res)
 }
 
 #' @rdname read-write
 #' @export
-read_stderr = function(stream)
+read_stderr = function(stream, timeout = 10)
 {
-  res = read_stderr_(stream@handle)
+  res = read_stderr_(stream@handle, timeout)
   class(res) = "rawtext"
   return(res)
 }
@@ -237,46 +245,48 @@ signal = function(stream, signal = 15, group = FALSE)
 #' or optionally stderr, and then returns that text when the connection is
 #' read. Note that the reading happens at the time of creation.
 #' 
-#' @return
-#' \code{pstream_input_conn:} a \code{\link{textConnection}} object
-#' \code{pstream_output_conn:} output connection is a list with two elements: \code{conn} that
-#' contains the connection object and \code{flush}, which is a function that
-#' writes the data to the pstream. Pass the \code{conn} element to function that
-#' operate on connections and then call \code{flush}.
+#' You must call \code{\link{flush}} on an output connection or nothing
+#' will get written to the processes standard input. Because these objects
+#' are \code{\link{textConnection}}s, they cannot be used repeatedly.
+#' Always initialize a new connection for each use.
+#' 
+#' @return a \code{\link{textConnection}} object
 #' 
 #' @examples
-#' # The examples environment appears to bind stdout
-#' # so the output is suppressed. This works typed
-#' # into an R session.
-#' \dontrun{
 #' x = pstream("R", "--vanilla --slave")
 #' c1 = pstream_output_conn(x)
-#' writeLines("R.Version()", c1$conn)
-#' c1$flush()
+#' writeLines("R.Version()", c1)
+#' flush(c1)                # required
 #' c2 = pstream_input_conn(x)
-#' readLines(c2)
+#' cat(readLines(c2))
 #' pstream_close(x)
 #' 
-#' # send and retreive an R object
-#' # works in regular R session
 #' x = pstream("R", "--vanilla --slave")
 #' a = 1:3
 #' write_stdin(x, "a = unserialize(stdin())")
 #' c1 = pstream_output_conn(x)
-#' serialize(a, conn(c1))            # get the con object
-#' flush(c1)                         # required
+#' serialize(a, c1)            # get the con object
+#' flush(c1)                   # required
 #' write_stdin(x, "serialize(a, stdout())")
 #' c2 = pstream_input_conn(x)
-#' unserialize(c2)
+#' cat(unserialize(c2))
 #' pstream_close(x)
-#' }
+#' 
+#' x = pstream("R", "--vanilla --slave")
+#' data(mtcars)
+#' write_stdin(x, "x = read.table(stdin())")
+#' c1 = pstream_output_conn(x)
+#' write.table(mtcars, c1)
+#' write_stdin(x, "head(x)")
+#' read_stdout(x, 1)
+#' pstream_close(x)
 #' 
 #' @rdname pstream-conn
 #' @export
-pstream_input_conn = function(stream, stderr = FALSE)
+pstream_input_conn = function(stream, timeout = 5, stderr = FALSE)
 {
-  msg = if (stderr) read_stderr(stream)
-               else read_stdout(stream)
+  msg = if (stderr) read_stderr(stream, timeout)
+               else read_stdout(stream, timeout)
   textConnection(msg)
 }
 
@@ -286,18 +296,14 @@ pstream_output_conn = function(stream, send_eof = FALSE)
 {
   msg = NULL
   tconn = textConnection("msg", open = "w", local = TRUE)
-  f = function() write_stdin(stream, msg, send_eof)
-  structure(list(conn = tconn, flush = f),
-            class = "pstream_output_conn")
+  class(tconn) = c("pstream_output_conn", class(tconn))
+  attr(tconn, "flush") = function() write_stdin(stream, msg, send_eof)
+  return(tconn)
 }
-
-#' @rdname pstream-conn
-#' @export
-conn = function(stream) stream$conn
 
 #' @rdname pstream-conn
 #' @export
 setMethod("flush",
 signature(con = "pstream_output_conn"),
-function(stream) stream$flush())
+function(con) {f = attr(con, "flush"); f()})
 

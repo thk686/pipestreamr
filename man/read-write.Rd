@@ -8,20 +8,34 @@
 \usage{
 write_stdin(stream, data, send_eof = FALSE)
 
-read_stdout(stream)
+read_stdout(stream, timeout = 10)
 
-read_stderr(stream)
+read_stderr(stream, timeout = 10)
 }
 \arguments{
 \item{stream}{a pstream object}
 
 \item{data}{a vector of values}
 
-\item{send_eof}{if true, write EOF to stream
+\item{send_eof}{if true, write EOF to stream}
 
-# Note: it appears that reading from stdout and stderr
-# does not work in examples. I suspect those are redirected
-# by R internally when running examples.
+\item{timeout}{number of seconds to attempt reading}
+}
+\description{
+Read and write data to process
+}
+\details{
+Because reading from the pipe stream is non-blocking, there is
+no method to determine whether the process has written anything
+to its standard out or standard error. If no output has been
+generated, then \code{read_stdout} and \code{read_stderr} will
+return empty strings. You may need to \code{\link{Sys.sleep}}
+between writting to standard input and reading from standard
+output. \code{read_stdout} and \code{read_stderr} will try
+to read output for \code{timeout} seconds and then quit. They
+will return immediately if there are characters to be read.
+}
+\examples{
 x = pstream("R")
 read_stderr(x)
 
@@ -29,9 +43,6 @@ x = pstream("R", "--vanilla")
 read_stdout(x)
 write_stdin(x, "R.Version()")
 read_stdout(x)
-write_stdin(x, "q()")}
-}
-\description{
-Read and write data to process
+write_stdin(x, "q()")
 }
 

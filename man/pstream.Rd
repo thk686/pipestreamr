@@ -41,9 +41,6 @@ after another round of waiting, the process has not existed, it is then sent
 the SIGKILL signal. After that, the stream is manually closed.
 }
 \examples{
-# Note: it appears that reading from stdout and stderr
-# does not work in examples. I suspect those are redirected
-# by R internally when running examples.
 x = pstream("R")
 status(x)
 read_stderr(x)

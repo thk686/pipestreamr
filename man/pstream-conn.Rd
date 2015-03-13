@@ -2,17 +2,14 @@
 % Please edit documentation in R/rpstreams.R
 \docType{methods}
 \name{pstream_input_conn}
-\alias{conn}
 \alias{flush,pstream_output_conn-method}
 \alias{pstream_input_conn}
 \alias{pstream_output_conn}
 \title{Rpstreams connections objects}
 \usage{
-pstream_input_conn(stream, stderr = FALSE)
+pstream_input_conn(stream, timeout = 5, stderr = FALSE)
 
 pstream_output_conn(stream, send_eof = FALSE)
-
-conn(stream)
 
 \S4method{flush}{pstream_output_conn}(con)
 }
@@ -24,11 +21,7 @@ conn(stream)
 \item{send_eof}{write EOF after sending message?}
 }
 \value{
-\code{pstream_input_conn:} a \code{\link{textConnection}} object
-\code{pstream_output_conn:} output connection is a list with two elements: \code{conn} that
-contains the connection object and \code{flush}, which is a function that
-writes the data to the pstream. Pass the \code{conn} element to function that
-operate on connections and then call \code{flush}.
+a \code{\link{textConnection}} object
 }
 \description{
 Open an R connection object for reading or writing to process
@@ -39,32 +32,39 @@ of IO modes. These function build \code{\link{textConnection}} object that
 read or write to a pstream. An input connection simply reads from stdout,
 or optionally stderr, and then returns that text when the connection is
 read. Note that the reading happens at the time of creation.
+
+You must call \code{\link{flush}} on an output connection or nothing
+will get written to the processes standard input. Because these objects
+are \code{\link{textConnection}}s, they cannot be used repeatedly.
+Always initialize a new connection for each use.
 }
 \examples{
-# The examples environment appears to bind stdout
-# so the output is suppressed. This works typed
-# into an R session.
-\dontrun{
 x = pstream("R", "--vanilla --slave")
 c1 = pstream_output_conn(x)
-writeLines("R.Version()", c1$conn)
-c1$flush()
+writeLines("R.Version()", c1)
+flush(c1)                # required
 c2 = pstream_input_conn(x)
-readLines(c2)
+cat(readLines(c2))
 pstream_close(x)
 
-# send and retreive an R object
-# works in regular R session
 x = pstream("R", "--vanilla --slave")
 a = 1:3
 write_stdin(x, "a = unserialize(stdin())")
 c1 = pstream_output_conn(x)
-serialize(a, conn(c1))            # get the con object
-flush(c1)                         # required
+serialize(a, c1)            # get the con object
+flush(c1)                   # required
 write_stdin(x, "serialize(a, stdout())")
 c2 = pstream_input_conn(x)
-unserialize(c2)
+cat(unserialize(c2))
 pstream_close(x)
-}
+
+x = pstream("R", "--vanilla --slave")
+data(mtcars)
+write_stdin(x, "x = read.table(stdin())")
+c1 = pstream_output_conn(x)
+write.table(mtcars, c1)
+write_stdin(x, "head(x)")
+read_stdout(x, 1)
+pstream_close(x)
 }
 

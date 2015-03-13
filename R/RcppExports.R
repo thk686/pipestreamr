@@ -13,12 +13,12 @@ write_stdin_ <- function(s, v) {
     invisible(.Call('rpstreams_write_stdin_', PACKAGE = 'rpstreams', s, v))
 }
 
-read_stdout_ <- function(s) {
-    .Call('rpstreams_read_stdout_', PACKAGE = 'rpstreams', s)
+read_stdout_ <- function(s, timeout = 0) {
+    .Call('rpstreams_read_stdout_', PACKAGE = 'rpstreams', s, timeout)
 }
 
-read_stderr_ <- function(s) {
-    .Call('rpstreams_read_stderr_', PACKAGE = 'rpstreams', s)
+read_stderr_ <- function(s, timeout = 0) {
+    .Call('rpstreams_read_stderr_', PACKAGE = 'rpstreams', s, timeout)
 }
 
 is_open_ <- function(s) {

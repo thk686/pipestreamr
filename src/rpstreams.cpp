@@ -1,5 +1,8 @@
 #include "../inst/include/rpstreams.h"
 
+// Use R for more protability
+static Function rsleep("Sys.sleep");
+
 // [[Rcpp::export]]
 handle
 make_pstream(std::string command, SEXP args)
@@ -38,31 +41,57 @@ void write_stdin_(handle s, std::string v)
 }
 
 // [[Rcpp::export]]
-std::string read_stdout_(handle s)
+std::string read_stdout_(handle s, double timeout = 0)
 {
   if (!s) stop("Invalid stream reference");
   char buf[1024];
+  int n;
   std::stringstream ss;
+  std::time_t start = std::time(NULL);
   while (true)
   {
-    int n = s->out().readsome(buf, sizeof(buf));
-    if (n == 0) break;
-    ss.write(buf, n);
+    n = s->out().readsome(buf, sizeof(buf));
+    if (n != 0)
+    {
+      ss.write(buf, n);
+      while (true)
+      {
+        usleep(TICK_DELAY);
+        n = s->out().readsome(buf, sizeof(buf));
+        if (n != 0) ss.write(buf, n); else break;
+      }
+      break;
+    }
+    std::time_t now = std::time(NULL);
+    if (difftime(now, start) > timeout) break;
   }
   return ss.str();
 }
 
 // [[Rcpp::export]]
-std::string read_stderr_(handle s)
+std::string read_stderr_(handle s, double timeout = 0)
 {
   if (!s) stop("Invalid stream reference");
   char buf[1024];
+  int n;
   std::stringstream ss;
+  std::time_t start = std::time(NULL);
   while (true)
   {
-    int n = s->err().readsome(buf, sizeof(buf));
-    if (n == 0) break;
-    ss.write(buf, n);
+    n = s->err().readsome(buf, sizeof(buf));
+    if (n != 0)
+    {
+      ss.write(buf, n);
+      while (true)
+      {
+        usleep(TICK_DELAY);
+        n = s->err().readsome(buf, sizeof(buf));
+        if (n != 0) ss.write(buf, n); else break;
+      }
+      break;
+    }
+    std::time_t now = std::time(NULL);
+    if (difftime(now, start) > timeout) break;
   }
   return ss.str();
 }

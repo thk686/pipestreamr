@@ -1,5 +1,6 @@
 #ifndef __RPSTREAMS_H__
 #define __RPSTREAMS_H__
+#include <ctime>
 #include <sstream>
 #include "pstream.h"
 using namespace redi;
