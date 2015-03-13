@@ -1,8 +1,5 @@
 #include "../inst/include/rpstreams.h"
 
-// Use R for more protability
-static Function rsleep("Sys.sleep");
-
 // [[Rcpp::export]]
 handle
 make_pstream(std::string command, SEXP args)
@@ -15,10 +12,13 @@ make_pstream(std::string command, SEXP args)
 
 static bool still_running(handle s)
 {
-  for (int i = 0; i != KILL_WAIT_SECONDS; ++i)
+  std::time_t start = std::time(NULL);
+  while (true)
   {
     if (s->rdbuf()->exited()) return false;
-    sleep(1);
+    usleep(TICK_DELAY);
+    std::time_t now = std::time(NULL);
+    if (std::difftime(now, start) > KILL_WAIT_SECONDS) break;
   }
   return !s->rdbuf()->exited();
 }
@@ -43,11 +43,11 @@ void write_stdin_(handle s, std::string v)
 // [[Rcpp::export]]
 std::string read_stdout_(handle s, double timeout = 0)
 {
-  if (!s) stop("Invalid stream reference");
-  char buf[1024];
   int n;
-  std::stringstream ss;
+  char buf[1024];
+  if (!s) stop("Invalid stream reference");
   std::time_t start = std::time(NULL);
+  std::stringstream ss;
   while (true)
   {
     n = s->out().readsome(buf, sizeof(buf));
@@ -63,7 +63,7 @@ std::string read_stdout_(handle s, double timeout = 0)
       break;
     }
     std::time_t now = std::time(NULL);
-    if (difftime(now, start) > timeout) break;
+    if (std::difftime(now, start) > timeout) break;
   }
   return ss.str();
 }
@@ -71,11 +71,11 @@ std::string read_stdout_(handle s, double timeout = 0)
 // [[Rcpp::export]]
 std::string read_stderr_(handle s, double timeout = 0)
 {
-  if (!s) stop("Invalid stream reference");
-  char buf[1024];
   int n;
-  std::stringstream ss;
+  char buf[1024];
+  if (!s) stop("Invalid stream reference");
   std::time_t start = std::time(NULL);
+  std::stringstream ss;
   while (true)
   {
     n = s->err().readsome(buf, sizeof(buf));
@@ -91,7 +91,7 @@ std::string read_stderr_(handle s, double timeout = 0)
       break;
     }
     std::time_t now = std::time(NULL);
-    if (difftime(now, start) > timeout) break;
+    if (std::difftime(now, start) > timeout) break;
   }
   return ss.str();
 }

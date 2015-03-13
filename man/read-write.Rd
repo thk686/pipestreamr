@@ -27,13 +27,20 @@ Read and write data to process
 \details{
 Because reading from the pipe stream is non-blocking, there is
 no method to determine whether the process has written anything
-to its standard out or standard error. If no output has been
-generated, then \code{read_stdout} and \code{read_stderr} will
-return empty strings. You may need to \code{\link{Sys.sleep}}
-between writting to standard input and reading from standard
-output. \code{read_stdout} and \code{read_stderr} will try
-to read output for \code{timeout} seconds and then quit. They
-will return immediately if there are characters to be read.
+to its standard out or standard error. As a result,
+\code{read_stdout} and \code{read_stderr} may return empty strings
+indicating the process has not generated any output. These two read
+functions take a timeout parameter that sets the amount of time in
+seconds to attempt reading. If any output is available for consumption
+during this period, then these functions will continue to read output
+until all available output is consumed. This output is then returned.
+A slight pause is necessary between attempts to consume output from
+the process. This delay is controlled by the compile-time parameter
+TICK_DELAY, which is in units of miliseconds. Ten miliseconds appears
+to be sufficient to avoid starvation of the input buffer. A longer
+delay will be less likely to return partial output
+and will be more CPU efficient. A shorter delay will lead to less
+latency.
 }
 \examples{
 x = pstream("R")
@@ -44,5 +51,12 @@ read_stdout(x)
 write_stdin(x, "R.Version()")
 read_stdout(x)
 write_stdin(x, "q()")
+x = pstream("R", "--vanilla --slave")
+system.time(read_stdout(x, 1))
+system.time(read_stdout(x, 2))
+system.time(read_stdout(x, 3))
+write_stdin(x, "R.Version()")
+system.time(read_stdout(x, 100))
+pstream_close(x)
 }
 
