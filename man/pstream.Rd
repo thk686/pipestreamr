@@ -6,7 +6,7 @@
 \alias{pstream}
 \alias{pstream_close}
 \alias{send_eof}
-\alias{set_buffer_size}
+\alias{set_buffer_soze}
 \alias{set_max_reads}
 \alias{set_read_formatter}
 \alias{set_write_formatter}
@@ -21,7 +21,7 @@ set_read_formatter(stream, func)
 
 set_write_formatter(stream, func)
 
-set_buffer_size(stream, bufsz)
+set_buffer_soze(stream, bufsz)
 
 set_max_reads(stream, max_reads)
 
@@ -75,13 +75,6 @@ checked for \code{wait} seconds.
 If the process does not exit during that period, then SIGTERM signal is sent. If
 after another round of waiting, the process has not existed, it is then sent
 the SIGKILL signal. After that, the stream is manually closed.
-}
-\note{
-Pipe stream objects are not compatible with R \code{\link{connection}}
-objects. (See \code{\link{pstream_input_con}}.) However, \code{\link{open}}
-and \code{\link{close}} methods are defined for convenience.
-\code{close} calls \code{pstream_close}. \code{open} will
-reopen a closed pstream object.
 }
 \examples{
 x = pstream("R")
