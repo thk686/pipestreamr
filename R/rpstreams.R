@@ -32,7 +32,7 @@ setClass("pstream",
 
 #' Open a pipe stream object
 #'
-#' Opens a set of pipes to stdin, stdout and stderr for
+#' Opens a set of pipes to stdin, stdout and stderr
 #' on the specified process.
 #' 
 #' @param command the program to run
@@ -97,19 +97,19 @@ pstream = function(command, args = "",
 #' @param func a formatter function
 #' @rdname pstream
 #' @export
-set_read_formatter = function(stream, func) obj@read_formatter = func
+set_read_formatter = function(stream, func) stream@read_formatter = func
 
 #' @rdname pstream
 #' @export
-set_write_formatter = function(stream, func) obj@write_formatter = func
+set_write_formatter = function(stream, func) stream@write_formatter = func
 
 #' @rdname pstream
 #' @export
-set_buffer_size = function(stream, bufsz) obj@buffer_size = bufsz
+set_buffer_size = function(stream, bufsz) stream@buffer_size = bufsz
 
 #' @rdname pstream
 #' @export
-set_max_reads = function(stream, max_reads) obj@max_reads = max_reads
+set_max_reads = function(stream, max_reads) stream@max_reads = max_reads
 
 #' @param stream a pstream object
 #' @param wait number of seconds to wait before sending the kill signal
@@ -405,6 +405,16 @@ function(con) {f = attr(con, "flush"); f()})
 #' 
 #' @param lhs a pstream object
 #' @param rhs a data value or name
+#' 
+#' @details
+#' The \code{\%<<\%} operator writes the object on the right-hand
+#' side to the pstream object on the left-hand side using
+#' \code{\link{write_stdin}}. The \code{\%>>\%} opertor reads from
+#' the pstream object on the left-hand side and stores the result
+#' in the variable on the right-hand side using \code{\link{read_stdout}}.
+#' The \code{\%<>\%} writes a string to the stream and immediately
+#' reads from standard output and returns the result. This is mostly
+#' for quickly viewing the output from a program.
 #' 
 #' @return a pstream object invisibly
 #' 
