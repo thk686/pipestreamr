@@ -10,7 +10,7 @@ make_pstream(std::string command, SEXP args)
     return handle(new pstream(command, argv, mode));
 }
 
-static bool still_running(handle s)
+static bool still_running(handle s, double wait = 10)
 {
   std::time_t start = std::time(NULL);
   while (true)
@@ -18,33 +18,37 @@ static bool still_running(handle s)
     if (s->rdbuf()->exited()) return false;
     usleep(TICK_DELAY);
     std::time_t now = std::time(NULL);
-    if (std::difftime(now, start) > KILL_WAIT_SECONDS) break;
+    if (std::difftime(now, start) > wait) break;
   }
   return !s->rdbuf()->exited();
 }
 
 // [[Rcpp::export]]
-void close_(handle s)
+void close_(handle s, double wait = 10)
 {
   if (!s) stop("Invalid stream reference");
   if (!s->rdbuf()->exited()) s->rdbuf()->peof();
-  if (still_running(s)) s->rdbuf()->killpg(15);
-  if (still_running(s)) s->rdbuf()->killpg(9);
+  if (still_running(s, wait)) s->rdbuf()->killpg(15);
+  if (still_running(s, wait)) s->rdbuf()->killpg(9);
   if (s->is_open()) s->close();
 }
 
 // [[Rcpp::export]]
-void write_stdin_(handle s, std::string v)
+void write_stdin_(handle s, std::string v, bool write_endl = true)
 {
   if (!s) stop("Invalid stream reference");
-  *s << v << std::endl;
+  *s << v;
+  if (write_endl) *s << std::endl;
 }
 
 // [[Rcpp::export]]
-std::string read_stdout_(handle s, double timeout = 0)
+std::string read_stdout_(handle s,
+                         double timeout = 0,
+                         std::size_t bufsz = 1024,
+                         std::size_t max_reads = 1024)
 {
   int n;
-  char buf[1024];
+  char buf[bufsz];
   if (!s) stop("Invalid stream reference");
   std::time_t start = std::time(NULL);
   std::stringstream ss;
@@ -54,7 +58,7 @@ std::string read_stdout_(handle s, double timeout = 0)
     if (n != 0)
     {
       ss.write(buf, n);
-      while (true)
+      for (int i = 0; i != max_reads - 1; ++i)
       {
         usleep(TICK_DELAY);
         n = s->out().readsome(buf, sizeof(buf));
@@ -64,25 +68,29 @@ std::string read_stdout_(handle s, double timeout = 0)
     }
     std::time_t now = std::time(NULL);
     if (std::difftime(now, start) > timeout) break;
+    usleep(TICK_DELAY);
   }
   return ss.str();
 }
 
 // [[Rcpp::export]]
-std::string read_stderr_(handle s, double timeout = 0)
+std::string read_stderr_(handle s,
+                         double timeout = 0,
+                         std::size_t bufsz = 1024,
+                         std::size_t max_reads = 1024)
 {
   int n;
-  char buf[1024];
+  char buf[bufsz];
   if (!s) stop("Invalid stream reference");
   std::time_t start = std::time(NULL);
   std::stringstream ss;
   while (true)
   {
-    n = s->err().readsome(buf, sizeof(buf));
+    n = s->out().readsome(buf, sizeof(buf));
     if (n != 0)
     {
       ss.write(buf, n);
-      while (true)
+      for (int i = 0; i != max_reads - 1; ++i)
       {
         usleep(TICK_DELAY);
         n = s->err().readsome(buf, sizeof(buf));
@@ -92,6 +100,7 @@ std::string read_stderr_(handle s, double timeout = 0)
     }
     std::time_t now = std::time(NULL);
     if (std::difftime(now, start) > timeout) break;
+    usleep(TICK_DELAY);
   }
   return ss.str();
 }

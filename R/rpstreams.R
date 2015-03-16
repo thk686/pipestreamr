@@ -24,7 +24,11 @@ NULL
 setClass("pstream",
          slots = c(command = "character",
                    args = "character",
-                   handle = "externalptr"))
+                   handle = "externalptr",
+                   read_formatter = "function",
+                   write_formatter = "function",
+                   buffer_size = "numeric",
+                   max_reads = "numeric"))
 
 #' Open a pipe stream object
 #'
@@ -33,6 +37,10 @@ setClass("pstream",
 #' 
 #' @param command the program to run
 #' @param args a vector of argument strings
+#' @param bufsz size of the read buffer
+#' @param max_reads maximum number of buffer fills
+#' @param read_formatter formatter function when reading
+#' @param write_formatter formatter function when writing
 #' 
 #' @examples
 #' x = pstream("R")
@@ -54,36 +62,99 @@ setClass("pstream",
 #' 
 #' x = pstream("R", "--vanilla")
 #' status(x)
-#' pstream_close(x)
+#' close(x)
 #' status(x)
+#' 
+#' wf = function(x) "dir()"
+#' rf = function(x) "Boo!"
+#' x = pstream("R", "--vanilla --slave", rf, wf)
+#' write_stdin(x, "q()")
+#' read_stdout(x)
+#' close(x)
 #' 
 #' @rdname pstream
 #' @export
-pstream = function(command, args = "")
+pstream = function(command, args = "",
+                   read_formatter = function(x) x,
+                   write_formatter = function(x) as.character(x),
+                   bufsz = 1024, max_reads = 1024)
 {
   finalizer.fun = function(handle) close_(handle)
   argv = if(nzchar(args)) c(command, args) else NULL
   s = make_pstream(command, argv)
   if (!is_open_(s)) stop("Could not open stream")
   reg.finalizer(s, finalizer.fun, TRUE)
-  new("pstream", command = command, args = args, handle = s)
+  new("pstream",
+      command = command,
+      args = args,
+      handle = s,
+      buffer_size = bufsz,
+      max_reads = max_reads,
+      read_formatter = read_formatter,
+      write_formatter = write_formatter)
 }
 
+#' @param func a formatter function
+#' @rdname pstream
+#' @export
+set_read_formatter = function(stream, func) obj@read_formatter = func
+
+#' @rdname pstream
+#' @export
+set_write_formatter = function(stream, func) obj@write_formatter = func
+
+#' @rdname pstream
+#' @export
+set_buffer_size = function(stream, bufsz) obj@buffer_size = bufsz
+
+#' @rdname pstream
+#' @export
+set_max_reads = function(stream, max_reads) obj@max_reads = max_reads
+
 #' @param stream a pstream object
+#' @param wait number of seconds to wait before sending the kill signal
 #' @details Closing a stream will wait until the spawned process completes. This
 #' can hang your session if the process is not well-behaved. You should manually
 #' end the proces if possible. \code{pstream_close} will check whether the program
-#' has exited. If it is still running it, EOF is sent. The process is then
-#' checked for a predetermined number of seconds (set by the compile flag KILL_WAIT_SECONDS).
-#' If the process does not exit during that perio, then SIGTERM signal is sent. If
+#' has exited. If it is still running, EOF is sent. The process is then
+#' checked for \code{wait} seconds.
+#' If the process does not exit during that period, then SIGTERM signal is sent. If
 #' after another round of waiting, the process has not existed, it is then sent
 #' the SIGKILL signal. After that, the stream is manually closed.
 #' 
 #' @rdname pstream
 #' @export
-pstream_close = function(stream)
+pstream_close = function(stream, wait = 10)
 {
-  close_(stream@handle)
+  close_(stream@handle, wait = wait)
+}
+
+#' @note Pipe stream objects are not compatible with R \code{\link{connection}}
+#' objects. (See \code{\link{pstream_input_con}}.) However, \code{\link{open}}
+#' and \code{\link{close}} methods are defined for convenience.
+#' \code{close} calls \code{pstream_close}. \code{open} will
+#' reopen a closed pstream object.
+#' @param con a pstream object
+#' @param ... ignored
+#' @rdname pstream
+#' @export
+close.pstream = function(con, ...)
+{
+  close_(con@handle, ...)
+  invisible(con)
+}
+
+#' @rdname pstream
+#' @export
+open.pstream = function(con, ...)
+{
+  args = con@args
+  command = con@command
+  finalizer.fun = function(handle) close_(handle)
+  argv = if(nzchar(args)) c(command, args) else NULL
+  s = make_pstream(command, argv)
+  con@handle = s
+  return(con)
 }
 
 #' @rdname pstream
@@ -97,14 +168,21 @@ setMethod("show",
 signature("pstream"),
 function(object)
 {
-  cat("stream:", object@command, object@args, "\n")
+  cat("command:", object@command, object@args, "\n")
+  if (has_exited(x))
+  {
+    cat("Process terminated and returned code", exit_code(object), "\n")
+    cat(read_stderr(x, 0))
+  }
 })
 
 #' Read and write data to process
 #' 
 #' @param stream a pstream object
 #' @param data a vector of values
+#' @param send_endl if true, write return to stream
 #' @param send_eof if true, write EOF to stream
+#' @param timeout number of second to atempt reading
 #' 
 #' @details
 #' Because reading from the pipe stream is non-blocking, there is
@@ -115,7 +193,8 @@ function(object)
 #' functions take a timeout parameter that sets the amount of time in
 #' seconds to attempt reading. If any output is available for consumption
 #' during this period, then these functions will continue to read output
-#' until all available output is consumed. This output is then returned.
+#' until all available output is consumed or the number of read exceeds the
+#' \code{max_reads} parameter. This output is then returned.
 #' A slight pause is necessary between attempts to consume output from
 #' the process. This delay is controlled by the compile-time parameter
 #' TICK_DELAY, which is in units of miliseconds. Ten miliseconds appears
@@ -143,29 +222,36 @@ function(object)
 #' 
 #' @rdname read-write
 #' @export
-write_stdin = function(stream, data, send_eof = FALSE)
+write_stdin = function(stream, data,
+                       send_endl = TRUE,
+                       send_eof = FALSE)
 {
-  for (val in data)
-    write_stdin_(stream@handle, as.character(val))
+  wrf = stream@write_formatter
+  for (val in unlist(data))
+    write_stdin_(stream@handle, wrf(val), send_endl)
   if (send_eof) send_eof_(stream@handle)
   return(invisible(stream))
 }
 
-#' @param timeout number of seconds to attempt reading
 #' @rdname read-write
 #' @export
-read_stdout = function(stream, timeout = 10)
+read_stdout = function(stream, timeout = 1)
 {
-  res = read_stdout_(stream@handle, timeout)
+  rdf = stream@read_formatter
+  res = rdf(read_stdout_(stream@handle, timeout,
+                         stream@buffer_size, stream@max_reads))
   class(res) = "rawtext"
   return(res)
 }
 
 #' @rdname read-write
 #' @export
-read_stderr = function(stream, timeout = 10)
+read_stderr = function(stream, timeout = 1,
+                       bufsz = 1024, max_reads = 1024)
 {
-  res = read_stderr_(stream@handle, timeout)
+  rdf = stream@read_formatter
+  res = rdf(read_stderr_(stream@handle, timeout,
+                         stream@buffer_size, stream@max_reads))
   class(res) = "rawtext"
   return(res)
 }
@@ -251,6 +337,7 @@ signal = function(stream, signal = 15, group = FALSE)
 #' @param stream a pstream object
 #' @param stderr read from stderr?
 #' @param send_eof write EOF after sending message?
+#' @param con a pstream connection object
 #' 
 #' @details
 #' R's \code{\link{connections}} objects provide uniform access to a variety
@@ -268,56 +355,94 @@ signal = function(stream, signal = 15, group = FALSE)
 #' 
 #' @examples
 #' x = pstream("R", "--vanilla --slave")
-#' c1 = pstream_output_conn(x)
+#' c1 = pstream_output_con(x)
 #' writeLines("R.Version()", c1)
 #' flush(c1)                # required
-#' c2 = pstream_input_conn(x)
+#' c2 = pstream_input_con(x)
 #' cat(readLines(c2))
 #' pstream_close(x)
 #' 
 #' x = pstream("R", "--vanilla --slave")
 #' a = 1:3
-#' write_stdin(x, "a = unserialize(stdin())")
-#' c1 = pstream_output_conn(x)
-#' serialize(a, c1)            # get the con object
+#' x %<<% "a = unserialize(stdin())"
+#' c1 = pstream_output_con(x)
+#' serialize(a, c1)
 #' flush(c1)                   # required
-#' write_stdin(x, "serialize(a, stdout())")
-#' c2 = pstream_input_conn(x)
+#' x %<<% "serialize(a, stdout())"
+#' c2 = pstream_input_con(x)
 #' cat(unserialize(c2))
 #' pstream_close(x)
 #' 
-#' x = pstream("R", "--vanilla --slave")
-#' data(mtcars)
-#' write_stdin(x, "x = read.table(stdin())")
-#' c1 = pstream_output_conn(x)
-#' write.table(mtcars, c1)
-#' write_stdin(x, "head(x)")
-#' read_stdout(x, 1)
-#' pstream_close(x)
-#' 
-#' @rdname pstream-conn
+#' @rdname pstream-con
 #' @export
-pstream_input_conn = function(stream, timeout = 5, stderr = FALSE)
+pstream_input_con = function(stream, timeout = 5, stderr = FALSE)
 {
   msg = if (stderr) read_stderr(stream, timeout)
                else read_stdout(stream, timeout)
   textConnection(msg)
 }
 
-#' @rdname pstream-conn
+#' @rdname pstream-con
 #' @export
-pstream_output_conn = function(stream, send_eof = FALSE)
+pstream_output_con = function(stream, send_eof = FALSE)
 {
   msg = NULL
-  tconn = textConnection("msg", open = "w", local = TRUE)
-  class(tconn) = c("pstream_output_conn", class(tconn))
-  attr(tconn, "flush") = function() write_stdin(stream, msg, send_eof)
-  return(tconn)
+  tcon = textConnection("msg", open = "w", local = TRUE)
+  class(tcon) = c("pstream_output_con", class(tcon))
+  attr(tcon, "flush") = function() write_stdin(stream, msg, send_eof)
+  return(tcon)
 }
 
-#' @rdname pstream-conn
+setClass("pstream_output_con")
+
+#' @rdname pstream-con
 #' @export
 setMethod("flush",
-signature(con = "pstream_output_conn"),
+signature(con = "pstream_output_con"),
 function(con) {f = attr(con, "flush"); f()})
+
+#' Infix stream operators
+#' 
+#' @param lhs a pstream object
+#' @param rhs a data value or name
+#' 
+#' @return a pstream object invisibly
+#' 
+#' @examples
+#' x = pstream("R", "--vanilla --slave")
+#' x %<<% "R.Version()"
+#' x %>>% y
+#' show(y)
+#' x %<<% "R.Version()" %<<% "dir()" %>>% y
+#' show(y)
+#' x %<>% "R.Version()"
+#' 
+#' @rdname stream-infix
+#' @export
+`%<<%` = function(lhs, rhs)
+{
+  write_stdin(lhs, rhs)
+  invisible(lhs)
+}
+
+#' @rdname stream-infix
+#' @export
+`%>>%` = function(lhs, rhs)
+{
+  nm = deparse(substitute(rhs))
+  x = read_stdout(lhs)
+  assign(nm, x, 1)
+  invisible(lhs)
+}
+
+#' @rdname stream-infix
+#' @export
+`%<>%` = function(lhs, rhs)
+{
+  write_stdin(lhs, rhs)
+  if (has_exited(lhs))
+    read_stderr(lhs)
+  else
+   read_stdout(lhs)
+}
 

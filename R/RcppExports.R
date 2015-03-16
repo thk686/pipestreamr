@@ -5,20 +5,20 @@ make_pstream <- function(command, args) {
     .Call('rpstreams_make_pstream', PACKAGE = 'rpstreams', command, args)
 }
 
-close_ <- function(s) {
-    invisible(.Call('rpstreams_close_', PACKAGE = 'rpstreams', s))
+close_ <- function(s, wait = 10) {
+    invisible(.Call('rpstreams_close_', PACKAGE = 'rpstreams', s, wait))
 }
 
-write_stdin_ <- function(s, v) {
-    invisible(.Call('rpstreams_write_stdin_', PACKAGE = 'rpstreams', s, v))
+write_stdin_ <- function(s, v, write_endl = TRUE) {
+    invisible(.Call('rpstreams_write_stdin_', PACKAGE = 'rpstreams', s, v, write_endl))
 }
 
-read_stdout_ <- function(s, timeout = 0) {
-    .Call('rpstreams_read_stdout_', PACKAGE = 'rpstreams', s, timeout)
+read_stdout_ <- function(s, timeout = 0, bufsz = 1024L, max_reads = 1024L) {
+    .Call('rpstreams_read_stdout_', PACKAGE = 'rpstreams', s, timeout, bufsz, max_reads)
 }
 
-read_stderr_ <- function(s, timeout = 0) {
-    .Call('rpstreams_read_stderr_', PACKAGE = 'rpstreams', s, timeout)
+read_stderr_ <- function(s, timeout = 0, bufsz = 1024L, max_reads = 1024L) {
+    .Call('rpstreams_read_stderr_', PACKAGE = 'rpstreams', s, timeout, bufsz, max_reads)
 }
 
 is_open_ <- function(s) {

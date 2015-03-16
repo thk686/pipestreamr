@@ -10,121 +10,165 @@ using namespace Rcpp;
 handle make_pstream(std::string command, SEXP args);
 RcppExport SEXP rpstreams_make_pstream(SEXP commandSEXP, SEXP argsSEXP) {
 BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< std::string >::type command(commandSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type args(argsSEXP);
-    __result = Rcpp::wrap(make_pstream(command, args));
-    return __result;
+    SEXP __sexp_result;
+    {
+        Rcpp::RNGScope __rngScope;
+        Rcpp::traits::input_parameter< std::string >::type command(commandSEXP );
+        Rcpp::traits::input_parameter< SEXP >::type args(argsSEXP );
+        handle __result = make_pstream(command, args);
+        PROTECT(__sexp_result = Rcpp::wrap(__result));
+    }
+    UNPROTECT(1);
+    return __sexp_result;
 END_RCPP
 }
 // close_
-void close_(handle s);
-RcppExport SEXP rpstreams_close_(SEXP sSEXP) {
+void close_(handle s, double wait = 10);
+RcppExport SEXP rpstreams_close_(SEXP sSEXP, SEXP waitSEXP) {
 BEGIN_RCPP
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< handle >::type s(sSEXP);
-    close_(s);
+    {
+        Rcpp::RNGScope __rngScope;
+        Rcpp::traits::input_parameter< handle >::type s(sSEXP );
+        Rcpp::traits::input_parameter< double >::type wait(waitSEXP );
+        close_(s, wait);
+    }
     return R_NilValue;
 END_RCPP
 }
 // write_stdin_
-void write_stdin_(handle s, std::string v);
-RcppExport SEXP rpstreams_write_stdin_(SEXP sSEXP, SEXP vSEXP) {
+void write_stdin_(handle s, std::string v, bool write_endl = true);
+RcppExport SEXP rpstreams_write_stdin_(SEXP sSEXP, SEXP vSEXP, SEXP write_endlSEXP) {
 BEGIN_RCPP
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< handle >::type s(sSEXP);
-    Rcpp::traits::input_parameter< std::string >::type v(vSEXP);
-    write_stdin_(s, v);
+    {
+        Rcpp::RNGScope __rngScope;
+        Rcpp::traits::input_parameter< handle >::type s(sSEXP );
+        Rcpp::traits::input_parameter< std::string >::type v(vSEXP );
+        Rcpp::traits::input_parameter< bool >::type write_endl(write_endlSEXP );
+        write_stdin_(s, v, write_endl);
+    }
     return R_NilValue;
 END_RCPP
 }
 // read_stdout_
-std::string read_stdout_(handle s, double timeout);
-RcppExport SEXP rpstreams_read_stdout_(SEXP sSEXP, SEXP timeoutSEXP) {
+std::string read_stdout_(handle s, double timeout = 0, std::size_t bufsz = 1024, std::size_t max_reads = 1024);
+RcppExport SEXP rpstreams_read_stdout_(SEXP sSEXP, SEXP timeoutSEXP, SEXP bufszSEXP, SEXP max_readsSEXP) {
 BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< handle >::type s(sSEXP);
-    Rcpp::traits::input_parameter< double >::type timeout(timeoutSEXP);
-    __result = Rcpp::wrap(read_stdout_(s, timeout));
-    return __result;
+    SEXP __sexp_result;
+    {
+        Rcpp::RNGScope __rngScope;
+        Rcpp::traits::input_parameter< handle >::type s(sSEXP );
+        Rcpp::traits::input_parameter< double >::type timeout(timeoutSEXP );
+        Rcpp::traits::input_parameter< std::size_t >::type bufsz(bufszSEXP );
+        Rcpp::traits::input_parameter< std::size_t >::type max_reads(max_readsSEXP );
+        std::string __result = read_stdout_(s, timeout, bufsz, max_reads);
+        PROTECT(__sexp_result = Rcpp::wrap(__result));
+    }
+    UNPROTECT(1);
+    return __sexp_result;
 END_RCPP
 }
 // read_stderr_
-std::string read_stderr_(handle s, double timeout);
-RcppExport SEXP rpstreams_read_stderr_(SEXP sSEXP, SEXP timeoutSEXP) {
+std::string read_stderr_(handle s, double timeout = 0, std::size_t bufsz = 1024, std::size_t max_reads = 1024);
+RcppExport SEXP rpstreams_read_stderr_(SEXP sSEXP, SEXP timeoutSEXP, SEXP bufszSEXP, SEXP max_readsSEXP) {
 BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< handle >::type s(sSEXP);
-    Rcpp::traits::input_parameter< double >::type timeout(timeoutSEXP);
-    __result = Rcpp::wrap(read_stderr_(s, timeout));
-    return __result;
+    SEXP __sexp_result;
+    {
+        Rcpp::RNGScope __rngScope;
+        Rcpp::traits::input_parameter< handle >::type s(sSEXP );
+        Rcpp::traits::input_parameter< double >::type timeout(timeoutSEXP );
+        Rcpp::traits::input_parameter< std::size_t >::type bufsz(bufszSEXP );
+        Rcpp::traits::input_parameter< std::size_t >::type max_reads(max_readsSEXP );
+        std::string __result = read_stderr_(s, timeout, bufsz, max_reads);
+        PROTECT(__sexp_result = Rcpp::wrap(__result));
+    }
+    UNPROTECT(1);
+    return __sexp_result;
 END_RCPP
 }
 // is_open_
 bool is_open_(handle s);
 RcppExport SEXP rpstreams_is_open_(SEXP sSEXP) {
 BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< handle >::type s(sSEXP);
-    __result = Rcpp::wrap(is_open_(s));
-    return __result;
+    SEXP __sexp_result;
+    {
+        Rcpp::RNGScope __rngScope;
+        Rcpp::traits::input_parameter< handle >::type s(sSEXP );
+        bool __result = is_open_(s);
+        PROTECT(__sexp_result = Rcpp::wrap(__result));
+    }
+    UNPROTECT(1);
+    return __sexp_result;
 END_RCPP
 }
 // is_eof_
 bool is_eof_(handle s);
 RcppExport SEXP rpstreams_is_eof_(SEXP sSEXP) {
 BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< handle >::type s(sSEXP);
-    __result = Rcpp::wrap(is_eof_(s));
-    return __result;
+    SEXP __sexp_result;
+    {
+        Rcpp::RNGScope __rngScope;
+        Rcpp::traits::input_parameter< handle >::type s(sSEXP );
+        bool __result = is_eof_(s);
+        PROTECT(__sexp_result = Rcpp::wrap(__result));
+    }
+    UNPROTECT(1);
+    return __sexp_result;
 END_RCPP
 }
 // is_good_
 bool is_good_(handle s);
 RcppExport SEXP rpstreams_is_good_(SEXP sSEXP) {
 BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< handle >::type s(sSEXP);
-    __result = Rcpp::wrap(is_good_(s));
-    return __result;
+    SEXP __sexp_result;
+    {
+        Rcpp::RNGScope __rngScope;
+        Rcpp::traits::input_parameter< handle >::type s(sSEXP );
+        bool __result = is_good_(s);
+        PROTECT(__sexp_result = Rcpp::wrap(__result));
+    }
+    UNPROTECT(1);
+    return __sexp_result;
 END_RCPP
 }
 // is_bad_
 bool is_bad_(handle s);
 RcppExport SEXP rpstreams_is_bad_(SEXP sSEXP) {
 BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< handle >::type s(sSEXP);
-    __result = Rcpp::wrap(is_bad_(s));
-    return __result;
+    SEXP __sexp_result;
+    {
+        Rcpp::RNGScope __rngScope;
+        Rcpp::traits::input_parameter< handle >::type s(sSEXP );
+        bool __result = is_bad_(s);
+        PROTECT(__sexp_result = Rcpp::wrap(__result));
+    }
+    UNPROTECT(1);
+    return __sexp_result;
 END_RCPP
 }
 // is_fail_
 bool is_fail_(handle s);
 RcppExport SEXP rpstreams_is_fail_(SEXP sSEXP) {
 BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< handle >::type s(sSEXP);
-    __result = Rcpp::wrap(is_fail_(s));
-    return __result;
+    SEXP __sexp_result;
+    {
+        Rcpp::RNGScope __rngScope;
+        Rcpp::traits::input_parameter< handle >::type s(sSEXP );
+        bool __result = is_fail_(s);
+        PROTECT(__sexp_result = Rcpp::wrap(__result));
+    }
+    UNPROTECT(1);
+    return __sexp_result;
 END_RCPP
 }
 // send_eof_
 void send_eof_(handle s);
 RcppExport SEXP rpstreams_send_eof_(SEXP sSEXP) {
 BEGIN_RCPP
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< handle >::type s(sSEXP);
-    send_eof_(s);
+    {
+        Rcpp::RNGScope __rngScope;
+        Rcpp::traits::input_parameter< handle >::type s(sSEXP );
+        send_eof_(s);
+    }
     return R_NilValue;
 END_RCPP
 }
@@ -132,44 +176,58 @@ END_RCPP
 int exit_code_(handle s);
 RcppExport SEXP rpstreams_exit_code_(SEXP sSEXP) {
 BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< handle >::type s(sSEXP);
-    __result = Rcpp::wrap(exit_code_(s));
-    return __result;
+    SEXP __sexp_result;
+    {
+        Rcpp::RNGScope __rngScope;
+        Rcpp::traits::input_parameter< handle >::type s(sSEXP );
+        int __result = exit_code_(s);
+        PROTECT(__sexp_result = Rcpp::wrap(__result));
+    }
+    UNPROTECT(1);
+    return __sexp_result;
 END_RCPP
 }
 // errno_
 int errno_(handle s);
 RcppExport SEXP rpstreams_errno_(SEXP sSEXP) {
 BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< handle >::type s(sSEXP);
-    __result = Rcpp::wrap(errno_(s));
-    return __result;
+    SEXP __sexp_result;
+    {
+        Rcpp::RNGScope __rngScope;
+        Rcpp::traits::input_parameter< handle >::type s(sSEXP );
+        int __result = errno_(s);
+        PROTECT(__sexp_result = Rcpp::wrap(__result));
+    }
+    UNPROTECT(1);
+    return __sexp_result;
 END_RCPP
 }
 // has_exited_
 bool has_exited_(handle s);
 RcppExport SEXP rpstreams_has_exited_(SEXP sSEXP) {
 BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< handle >::type s(sSEXP);
-    __result = Rcpp::wrap(has_exited_(s));
-    return __result;
+    SEXP __sexp_result;
+    {
+        Rcpp::RNGScope __rngScope;
+        Rcpp::traits::input_parameter< handle >::type s(sSEXP );
+        bool __result = has_exited_(s);
+        PROTECT(__sexp_result = Rcpp::wrap(__result));
+    }
+    UNPROTECT(1);
+    return __sexp_result;
 END_RCPP
 }
 // signal_
-void signal_(handle s, int signal, bool group);
+void signal_(handle s, int signal, bool group = false);
 RcppExport SEXP rpstreams_signal_(SEXP sSEXP, SEXP signalSEXP, SEXP groupSEXP) {
 BEGIN_RCPP
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< handle >::type s(sSEXP);
-    Rcpp::traits::input_parameter< int >::type signal(signalSEXP);
-    Rcpp::traits::input_parameter< bool >::type group(groupSEXP);
-    signal_(s, signal, group);
+    {
+        Rcpp::RNGScope __rngScope;
+        Rcpp::traits::input_parameter< handle >::type s(sSEXP );
+        Rcpp::traits::input_parameter< int >::type signal(signalSEXP );
+        Rcpp::traits::input_parameter< bool >::type group(groupSEXP );
+        signal_(s, signal, group);
+    }
     return R_NilValue;
 END_RCPP
 }

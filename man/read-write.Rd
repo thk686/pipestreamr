@@ -6,20 +6,22 @@
 \alias{write_stdin}
 \title{Read and write data to process}
 \usage{
-write_stdin(stream, data, send_eof = FALSE)
+write_stdin(stream, data, send_endl = TRUE, send_eof = FALSE)
 
-read_stdout(stream, timeout = 10)
+read_stdout(stream, timeout = 1)
 
-read_stderr(stream, timeout = 10)
+read_stderr(stream, timeout = 1, bufsz = 1024, max_reads = 1024)
 }
 \arguments{
 \item{stream}{a pstream object}
 
 \item{data}{a vector of values}
 
+\item{send_endl}{if true, write return to stream}
+
 \item{send_eof}{if true, write EOF to stream}
 
-\item{timeout}{number of seconds to attempt reading}
+\item{timeout}{number of second to atempt reading}
 }
 \description{
 Read and write data to process
@@ -33,7 +35,8 @@ indicating the process has not generated any output. These two read
 functions take a timeout parameter that sets the amount of time in
 seconds to attempt reading. If any output is available for consumption
 during this period, then these functions will continue to read output
-until all available output is consumed. This output is then returned.
+until all available output is consumed or the number of read exceeds the
+\code{max_reads} parameter. This output is then returned.
 A slight pause is necessary between attempts to consume output from
 the process. This delay is controlled by the compile-time parameter
 TICK_DELAY, which is in units of miliseconds. Ten miliseconds appears
