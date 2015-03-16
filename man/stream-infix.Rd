@@ -23,6 +23,16 @@ a pstream object invisibly
 \description{
 Infix stream operators
 }
+\details{
+The \code{\%<<\%} operator writes the object on the right-hand
+side to the pstream object on the left-hand side using
+\code{\link{write_stdin}}. The \code{\%>>\%} opertor reads from
+the pstream object on the left-hand side and stores the result
+in the variable on the right-hand side using \code{\link{read_stdout}}.
+The \code{\%<>\%} writes a string to the stream and immediately
+reads from standard output and returns the result. This is mostly
+for quickly viewing the output from a program.
+}
 \examples{
 x = pstream("R", "--vanilla --slave")
 x \%<<\% "R.Version()"

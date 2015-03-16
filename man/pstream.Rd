@@ -63,7 +63,7 @@ signal(stream, signal = 15, group = FALSE)
 \item{group}{signal the entire process group?}
 }
 \description{
-Opens a set of pipes to stdin, stdout and stderr for
+Opens a set of pipes to stdin, stdout and stderr
 on the specified process.
 }
 \details{
@@ -75,6 +75,13 @@ checked for \code{wait} seconds.
 If the process does not exit during that period, then SIGTERM signal is sent. If
 after another round of waiting, the process has not existed, it is then sent
 the SIGKILL signal. After that, the stream is manually closed.
+}
+\note{
+Pipe stream objects are not compatible with R \code{\link{connection}}
+objects. (See \code{\link{pstream_input_con}}.) However, \code{\link{open}}
+and \code{\link{close}} methods are defined for convenience.
+\code{close} calls \code{pstream_close}. \code{open} will
+reopen a closed pstream object.
 }
 \examples{
 x = pstream("R")
