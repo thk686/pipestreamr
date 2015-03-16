@@ -105,7 +105,7 @@ set_write_formatter = function(stream, func) obj@write_formatter = func
 
 #' @rdname pstream
 #' @export
-set_buffer_soze = function(stream, bufsz) obj@buffer_size = bufsz
+set_buffer_size = function(stream, bufsz) obj@buffer_size = bufsz
 
 #' @rdname pstream
 #' @export
@@ -129,6 +129,11 @@ pstream_close = function(stream, wait = 10)
   close_(stream@handle, wait = wait)
 }
 
+#' @note Pipe stream objects are not compatible with R \code{\link{connection}}
+#' objects. (See \code{\link{pstream_input_con}}.) However, \code{\link{open}}
+#' and \code{\link{close}} methods are defined for convenience.
+#' \code{close} calls \code{pstream_close}. \code{open} will
+#' reopen a closed pstream object.
 #' @param con a pstream object
 #' @param ... ignored
 #' @rdname pstream
