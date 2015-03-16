@@ -6,7 +6,7 @@
 \alias{pstream}
 \alias{pstream_close}
 \alias{send_eof}
-\alias{set_buffer_soze}
+\alias{set_buffer_size}
 \alias{set_max_reads}
 \alias{set_read_formatter}
 \alias{set_write_formatter}
@@ -21,7 +21,7 @@ set_read_formatter(stream, func)
 
 set_write_formatter(stream, func)
 
-set_buffer_soze(stream, bufsz)
+set_buffer_size(stream, bufsz)
 
 set_max_reads(stream, max_reads)
 
