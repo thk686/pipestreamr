@@ -91,7 +91,7 @@ pstream_close(x)
 
 x = pstream("R", "--vanilla")
 read_stdout(x)
-write_stdin(x, "R.Version()")
+write_stdin(x, "R.Version()[[1]]")
 read_stdout(x)
 send_eof(x); Sys.sleep(1)
 status(x)

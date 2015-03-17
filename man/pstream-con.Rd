@@ -43,7 +43,7 @@ Always initialize a new connection for each use.
 \examples{
 x = pstream("R", "--vanilla --slave")
 c1 = pstream_output_con(x)
-writeLines("R.Version()", c1)
+writeLines("R.Version()[[1]]", c1)
 flush(c1)                # required
 c2 = pstream_input_con(x)
 cat(readLines(c2))

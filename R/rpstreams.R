@@ -50,7 +50,7 @@ setClass("pstream",
 #' 
 #' x = pstream("R", "--vanilla")
 #' read_stdout(x)
-#' write_stdin(x, "R.Version()")
+#' write_stdin(x, "R.Version()[[1]]")
 #' read_stdout(x)
 #' send_eof(x); Sys.sleep(1)
 #' status(x)
@@ -80,7 +80,7 @@ pstream = function(command, args = "",
                    bufsz = 1024, max_reads = 1024)
 {
   finalizer.fun = function(handle) close_(handle)
-  argv = if(nzchar(args)) c(command, args) else NULL
+  argv = if(any(nzchar(args))) c(command, args) else NULL
   s = make_pstream(command, argv)
   if (!is_open_(s)) stop("Could not open stream")
   reg.finalizer(s, finalizer.fun, TRUE)
@@ -151,7 +151,7 @@ open.pstream = function(con, ...)
   args = con@args
   command = con@command
   finalizer.fun = function(handle) close_(handle)
-  argv = if(nzchar(args)) c(command, args) else NULL
+  argv = if(any(nzchar(args))) c(command, args) else NULL
   s = make_pstream(command, argv)
   con@handle = s
   return(con)
@@ -209,14 +209,14 @@ function(object)
 #' 
 #' x = pstream("R", "--vanilla")
 #' read_stdout(x)
-#' write_stdin(x, "R.Version()")
+#' write_stdin(x, "R.Version()[[1]]")
 #' read_stdout(x)
 #' write_stdin(x, "q()")
 #' x = pstream("R", "--vanilla --slave")
 #' system.time(read_stdout(x, 1))
 #' system.time(read_stdout(x, 2))
 #' system.time(read_stdout(x, 3))
-#' write_stdin(x, "R.Version()")
+#' write_stdin(x, "R.Version()[[1]]")
 #' system.time(read_stdout(x, 100))
 #' pstream_close(x)
 #' 
@@ -356,7 +356,7 @@ signal = function(stream, signal = 15, group = FALSE)
 #' @examples
 #' x = pstream("R", "--vanilla --slave")
 #' c1 = pstream_output_con(x)
-#' writeLines("R.Version()", c1)
+#' writeLines("R.Version()[[1]]", c1)
 #' flush(c1)                # required
 #' c2 = pstream_input_con(x)
 #' cat(readLines(c2))
@@ -409,29 +409,46 @@ function(con) {f = attr(con, "flush"); f()})
 #' @details
 #' The \code{\%<<\%} operator writes the object on the right-hand
 #' side to the pstream object on the left-hand side using
-#' \code{\link{write_stdin}}. The \code{\%>>\%} opertor reads from
+#' \code{\link{write_stdin}}. The \code{\%>>\%} operator reads from
 #' the pstream object on the left-hand side and stores the result
 #' in the variable on the right-hand side using \code{\link{read_stdout}}.
-#' The \code{\%<>\%} writes a string to the stream and immediately
+#' The \code{\%<>\%} operator writes a string to the stream and immediately
 #' reads from standard output and returns the result. This is mostly
-#' for quickly viewing the output from a program.
+#' for quickly viewing the output from a program. The \code{\%<<.\%}
+#' and \code{\%<.>\%} operators write to standard input exactly as
+#' \code{\%<<\%} and \code{\%<>\%}, but also send end-of-file.
+#' This is necessary for some programs to process
+#' input.
 #' 
 #' @return a pstream object invisibly
 #' 
 #' @examples
 #' x = pstream("R", "--vanilla --slave")
-#' x %<<% "R.Version()"
+#' x %<<% "R.Version()[[1]]"
 #' x %>>% y
 #' show(y)
-#' x %<<% "R.Version()" %<<% "dir()" %>>% y
+#' x %<<% "R.Version()[[1]]" %<<% "dir()" %>>% y
 #' show(y)
-#' x %<>% "R.Version()"
+#' x %<>% "R.Version()[[1]]"
+#' close(x)
+#' 
+#' x = pstream("tr", c("[:upper:]", "[:lower:]"))
+#' x %<<.% "TEST1" %>>% y
+#' show(y)
 #' 
 #' @rdname stream-infix
 #' @export
 `%<<%` = function(lhs, rhs)
 {
   write_stdin(lhs, rhs)
+  invisible(lhs)
+}
+
+#' @rdname stream-infix
+#' @export
+`%<<.%` = function(lhs, rhs)
+{
+  write_stdin(lhs, rhs, send_eof = TRUE)
   invisible(lhs)
 }
 
@@ -456,3 +473,10 @@ function(con) {f = attr(con, "flush"); f()})
    read_stdout(lhs)
 }
 
+#' @rdname stream-infix
+#' @export
+`%<.>%` = function(lhs, rhs)
+{
+  write_stdin(lhs, rhs, send_eof = TRUE)
+  read_stdout(lhs)
+}

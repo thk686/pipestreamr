@@ -10,18 +10,19 @@ To install this package: `devtools::install_github("rpstreams", "thk686")`
 
 Here is a small example:
 ```
-x = pstream("tr", "[:upper:] [:lower:]")
-x %<<% "TEST" %>>% y
+x = pstream("tr", c("[:upper:]", "[:lower:]"))
+x %<<.% "TEST" %>>% y
 print(y)
+close(x)
 
 x = pstream("R", "--vanilla --slave")
 a = 1:3
 write_stdin(x, "a = unserialize(stdin())")
-c1 = pstream_output_conn(x)       # writes stdin
+c1 = pstream_output_con(x)       # writes stdin
 serialize(a, conn(c1))            # get the con object
 flush(c1)                         # required
 write_stdin(x, "serialize(a, stdout())")
-c2 = pstream_input_conn(x)        # reads stdout
+c2 = pstream_input_con(x)        # reads stdout
 unserialize(c2)
 pstream_close(x)
 ```
