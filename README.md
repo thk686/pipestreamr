@@ -10,6 +10,10 @@ To install this package: `devtools::install_github("rpstreams", "thk686")`
 
 Here is a small example:
 ```
+x = pstream("tr", "[:upper:] [:lower:]")
+x %<<% "TEST" %>>% y
+print(y)
+
 x = pstream("R", "--vanilla --slave")
 a = 1:3
 write_stdin(x, "a = unserialize(stdin())")
