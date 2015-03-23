@@ -1,4 +1,4 @@
-#include "../inst/include/rpstreams.h"
+#include "../inst/include/pipestreamr.h"
 
 // [[Rcpp::export]]
 handle

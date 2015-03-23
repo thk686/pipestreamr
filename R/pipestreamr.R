@@ -1,6 +1,6 @@
 #' Bidirectional, non-blocking communication over pipes
 #' 
-#' The \code{rpstreams} package wraps Jonathan Wakely's pstreams library, which
+#' The \code{pipestreamr} package wraps Jonathan Wakely's pstreams library, which
 #' allows communicating with a subprocess using stdin, stdout and stderr. All
 #' reads are non-blocking.
 #' 
@@ -14,9 +14,9 @@
 #' @author Jonathan Wakeley (pstreams C++ library)
 #'
 #' @docType package
-#' @name rpstreams
+#' @name pipestreamr
 #' 
-#' @useDynLib rpstreams
+#' @useDynLib pipestreamr
 #' @import Rcpp
 #' @import methods
 NULL
@@ -330,7 +330,7 @@ status = function(stream)
 signal = function(stream, signal = 15, group = FALSE)
   signal_(stream@handle, signal, group)
 
-#' Rpstreams connections objects
+#' Pipe stream connections objects
 #' 
 #' Open an R connection object for reading or writing to process
 #' 

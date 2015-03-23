@@ -1,4 +1,4 @@
-# rpstreams
+# pipestreamr
 An R library for bidirectional communication over pipes
 
 This library wraps [pstreams](http://pstreams.sourceforge.net/).
@@ -6,7 +6,7 @@ This library wraps [pstreams](http://pstreams.sourceforge.net/).
 You can use it to open a process, write to its standard input
 and read from its standard output or standard error.
 
-To install this package: `devtools::install_github("rpstreams", "thk686")`
+To install this package: `devtools::install_github("pipestreamr", "thk686")`
 
 Here is a small example:
 ```

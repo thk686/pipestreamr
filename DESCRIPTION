@@ -1,4 +1,4 @@
-Package: rpstreams
+Package: pipestreamr
 Type: Package
 Title: Non-blocking IO over stdin, stdout and stderr
 Version: 1.0
