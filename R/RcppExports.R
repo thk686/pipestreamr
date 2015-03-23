@@ -2,62 +2,62 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 make_pstream <- function(command, args) {
-    .Call('rpstreams_make_pstream', PACKAGE = 'rpstreams', command, args)
+    .Call('pipestreamr_make_pstream', PACKAGE = 'pipestreamr', command, args)
 }
 
 close_ <- function(s, wait = 10) {
-    invisible(.Call('rpstreams_close_', PACKAGE = 'rpstreams', s, wait))
+    invisible(.Call('pipestreamr_close_', PACKAGE = 'pipestreamr', s, wait))
 }
 
 write_stdin_ <- function(s, v, write_endl = TRUE) {
-    invisible(.Call('rpstreams_write_stdin_', PACKAGE = 'rpstreams', s, v, write_endl))
+    invisible(.Call('pipestreamr_write_stdin_', PACKAGE = 'pipestreamr', s, v, write_endl))
 }
 
 read_stdout_ <- function(s, timeout = 0, bufsz = 1024L, max_reads = 1024L) {
-    .Call('rpstreams_read_stdout_', PACKAGE = 'rpstreams', s, timeout, bufsz, max_reads)
+    .Call('pipestreamr_read_stdout_', PACKAGE = 'pipestreamr', s, timeout, bufsz, max_reads)
 }
 
 read_stderr_ <- function(s, timeout = 0, bufsz = 1024L, max_reads = 1024L) {
-    .Call('rpstreams_read_stderr_', PACKAGE = 'rpstreams', s, timeout, bufsz, max_reads)
+    .Call('pipestreamr_read_stderr_', PACKAGE = 'pipestreamr', s, timeout, bufsz, max_reads)
 }
 
 is_open_ <- function(s) {
-    .Call('rpstreams_is_open_', PACKAGE = 'rpstreams', s)
+    .Call('pipestreamr_is_open_', PACKAGE = 'pipestreamr', s)
 }
 
 is_eof_ <- function(s) {
-    .Call('rpstreams_is_eof_', PACKAGE = 'rpstreams', s)
+    .Call('pipestreamr_is_eof_', PACKAGE = 'pipestreamr', s)
 }
 
 is_good_ <- function(s) {
-    .Call('rpstreams_is_good_', PACKAGE = 'rpstreams', s)
+    .Call('pipestreamr_is_good_', PACKAGE = 'pipestreamr', s)
 }
 
 is_bad_ <- function(s) {
-    .Call('rpstreams_is_bad_', PACKAGE = 'rpstreams', s)
+    .Call('pipestreamr_is_bad_', PACKAGE = 'pipestreamr', s)
 }
 
 is_fail_ <- function(s) {
-    .Call('rpstreams_is_fail_', PACKAGE = 'rpstreams', s)
+    .Call('pipestreamr_is_fail_', PACKAGE = 'pipestreamr', s)
 }
 
 send_eof_ <- function(s) {
-    invisible(.Call('rpstreams_send_eof_', PACKAGE = 'rpstreams', s))
+    invisible(.Call('pipestreamr_send_eof_', PACKAGE = 'pipestreamr', s))
 }
 
 exit_code_ <- function(s) {
-    .Call('rpstreams_exit_code_', PACKAGE = 'rpstreams', s)
+    .Call('pipestreamr_exit_code_', PACKAGE = 'pipestreamr', s)
 }
 
 errno_ <- function(s) {
-    .Call('rpstreams_errno_', PACKAGE = 'rpstreams', s)
+    .Call('pipestreamr_errno_', PACKAGE = 'pipestreamr', s)
 }
 
 has_exited_ <- function(s) {
-    .Call('rpstreams_has_exited_', PACKAGE = 'rpstreams', s)
+    .Call('pipestreamr_has_exited_', PACKAGE = 'pipestreamr', s)
 }
 
 signal_ <- function(s, signal, group = FALSE) {
-    invisible(.Call('rpstreams_signal_', PACKAGE = 'rpstreams', s, signal, group))
+    invisible(.Call('pipestreamr_signal_', PACKAGE = 'pipestreamr', s, signal, group))
 }
 
